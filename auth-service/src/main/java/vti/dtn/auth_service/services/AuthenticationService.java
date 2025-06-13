@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vti.dtn.auth_service.dto.request.LoginRequest;
 import vti.dtn.auth_service.dto.request.RegisterRequest;
@@ -20,6 +22,7 @@ import java.util.Optional;
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
     public RegisterResponse register(RegisterRequest registerRequest) {
@@ -45,7 +48,7 @@ public class AuthenticationService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
-                .password(password) // Password should be encoded in a real application
+                .password(passwordEncoder.encode(password)) // Password should be encoded in a real application
                 .role(Role.toEnum(role)) // Assuming role is a string, you might want to convert it to an enum
                 .build();
 

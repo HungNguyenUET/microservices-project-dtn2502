@@ -23,6 +23,6 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank(message = "Role cannot be blank")
-    @Pattern(regexp = "AMIN|MANAGER|USER", message = "The role must be ADMIN, MANAGER or USER")
+    @Pattern(regexp = "ADMIN|MANAGER|USER", message = "The role must be ADMIN, MANAGER or USER")
     private String role;
 }
