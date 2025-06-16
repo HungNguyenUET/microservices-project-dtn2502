@@ -10,6 +10,7 @@ import vti.dtn.auth_service.dto.request.LoginRequest;
 import vti.dtn.auth_service.dto.request.RegisterRequest;
 import vti.dtn.auth_service.dto.response.LoginResponse;
 import vti.dtn.auth_service.dto.response.RegisterResponse;
+import vti.dtn.auth_service.dto.response.VerifyTokenResponse;
 import vti.dtn.auth_service.services.AuthenticationService;
 
 @Slf4j
@@ -44,4 +45,14 @@ public class AuthenticationController {
                 .status(response.getStatus())
                 .body(response);
     }
+
+    @GetMapping("/verify")
+    public ResponseEntity<VerifyTokenResponse> verifyToken(@RequestHeader("Authorization") String authHeader) {
+        log.info("Verifying token: {}", authHeader);
+        VerifyTokenResponse response = authenticationService.verifyToken(authHeader);
+        return ResponseEntity
+                .status(response.getStatus())
+                .body(response);
+    }
+
 }

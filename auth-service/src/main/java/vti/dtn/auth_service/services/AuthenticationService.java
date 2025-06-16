@@ -1,6 +1,7 @@
 package vti.dtn.auth_service.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,12 +13,15 @@ import vti.dtn.auth_service.dto.request.LoginRequest;
 import vti.dtn.auth_service.dto.request.RegisterRequest;
 import vti.dtn.auth_service.dto.response.LoginResponse;
 import vti.dtn.auth_service.dto.response.RegisterResponse;
+import vti.dtn.auth_service.dto.response.VerifyTokenResponse;
 import vti.dtn.auth_service.entity.UserEntity;
 import vti.dtn.auth_service.entity.enums.Role;
 import vti.dtn.auth_service.repo.UserRepository;
 
+import java.util.Base64;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -137,6 +141,49 @@ public class AuthenticationService {
                 .userId(userEntity.getId())
                 .message("Refresh token successfully")
                 .status(HttpStatus.OK.value())
+                .build();
+    }
+
+    public VerifyTokenResponse verifyToken(String authHeader) {
+        log.info("verifyToken|authHeader: {}", authHeader);
+
+        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
+            log.error("verifyToken|Authorization header is missing or invalid");
+            return VerifyTokenResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Invalid token")
+                    .build();
+        }
+
+        String token = authHeader.substring(TOKEN_INDEX);
+        if( !jwtService.validateToken(token)) {
+            log.error("verifyToken|Invalid refresh token");
+            return VerifyTokenResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Invalid refresh token")
+                    .build();
+        }
+
+        String username = jwtService.extractUsername(token);
+
+        Optional<UserEntity> userFoundByUsername = userRepository.findByUsername(username);
+        if (userFoundByUsername.isEmpty()) {
+            log.error("verifyToken|User not found for username: {}", username);
+            return VerifyTokenResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Token revoked")
+                    .build();
+        }
+
+        String role = userFoundByUsername.get().getRole().name();
+        String userInfoStr = username + ":" + role;
+        String xUserToken = Base64.getEncoder().encodeToString(userInfoStr.getBytes());
+
+        log.info("verifyToken|X-User-Token: {}", xUserToken);
+        return VerifyTokenResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message("Success")
+                .xUserToken(xUserToken)
                 .build();
     }
 }
