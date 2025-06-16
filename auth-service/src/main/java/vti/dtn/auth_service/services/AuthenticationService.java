@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import vti.dtn.auth_service.dto.request.LoginRequest;
 import vti.dtn.auth_service.dto.request.RegisterRequest;
 import vti.dtn.auth_service.dto.response.LoginResponse;
@@ -20,6 +21,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+    private static final int TOKEN_INDEX = 7;
+
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -93,4 +96,47 @@ public class AuthenticationService {
 
     }
 
+    public LoginResponse refreshToken(String authHeader) {
+        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
+            return LoginResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Invalid token")
+                    .build();
+        }
+
+        String refreshToken = authHeader.substring(TOKEN_INDEX);
+        if( !jwtService.validateToken(refreshToken)) {
+            return LoginResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Invalid refresh token")
+                    .build();
+        }
+
+        String username = jwtService.extractUsername(refreshToken);
+
+        Optional<UserEntity> userFoundByUsername = userRepository.findByUsername(username);
+        if (userFoundByUsername.isEmpty()) {
+            return LoginResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Token revoked")
+                    .build();
+        }
+
+        UserEntity userEntity = userFoundByUsername.get();
+        String accessToken = jwtService.generateAccessToken(userEntity);
+        String newRefreshToken = jwtService.generateRefreshToken(userEntity);
+
+        userEntity.setAccessToken(accessToken);
+        userEntity.setRefreshToken(newRefreshToken);
+        userRepository.save(userEntity);
+
+        //Response access token and refresh token to client
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(userEntity.getId())
+                .message("Refresh token successfully")
+                .status(HttpStatus.OK.value())
+                .build();
+    }
 }

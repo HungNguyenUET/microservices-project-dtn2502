@@ -36,4 +36,12 @@ public class AuthenticationController {
                 .status(loginResponse.getStatus())
                 .body(loginResponse);
     }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<LoginResponse> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        LoginResponse response = authenticationService.refreshToken(authHeader);
+        return ResponseEntity
+                .status(response.getStatus())
+                .body(response);
+    }
 }
