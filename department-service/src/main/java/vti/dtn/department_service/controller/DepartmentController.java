@@ -19,4 +19,5 @@ public class DepartmentController {
     public List<DepartmentDTO> getAllDepartments() {
         return departmentService.getAllDepartments();
     }
+
 }
