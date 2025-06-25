@@ -25,22 +25,22 @@ public class UserEntity implements UserDetails {
     @Column(name = "username", length = 20, nullable = false)
     private String username;
 
-    @Column(name = "firstname", length = 20, nullable = true)
+    @Column(name = "firstname", length = 20)
     private String firstName;
 
-    @Column(name = "lastname", length = 20, nullable = true)
+    @Column(name = "lastname", length = 20)
     private String lastName;
 
     @Column(name = "email", length = 50, nullable = false)
     private String email;
 
-    @Column(name = "password", length = 120, nullable = false)
+    @Column(name = "password", length = 120)
     private String password;
 
-    @Column(name = "access_token", length = 255, nullable = true)
+    @Column(name = "access_token", length = 255)
     private String accessToken;
 
-    @Column(name = "refresh_token", length = 255, nullable = true)
+    @Column(name = "refresh_token", length = 255)
     private String refreshToken;
 
     @Enumerated(EnumType.STRING)
